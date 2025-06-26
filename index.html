@@ -85,6 +85,8 @@
           };
 
           // ✅ Inject Telegram data after Unity is ready
+          console.log("🔍 Telegram WebApp check:", window.Telegram);
+          console.log("🔍 initDataUnsafe:", Telegram?.WebApp?.initDataUnsafe);
           if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe) {
             const data = Telegram.WebApp.initDataUnsafe;
             const telegramId = data.user?.id || "";
