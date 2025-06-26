@@ -48,14 +48,13 @@
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/brickbreaker.loader.js";
       var config = {
-        arguments: [],
         dataUrl: buildUrl + "/brickbreaker.data",
         frameworkUrl: buildUrl + "/brickbreaker.framework.js",
         codeUrl: buildUrl + "/brickbreaker.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "Highscore Gaming",
         productName: "Brick Breaker",
-        productVersion: "1.0",
+        productVersion: "0.1",
         showBanner: unityShowBanner,
       };
 
@@ -76,32 +75,38 @@
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          document.querySelector("#unity-loading-bar").style.display = "none";
-          document.querySelector("#unity-fullscreen-button").onclick = () => {
-            unityInstance.SetFullscreen(1);
-          };
+        if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe) {
+          Telegram.WebApp.expand();
+          Telegram.WebApp.ready();
 
-          // ✅ Inject Telegram data after Unity is ready
-          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe) {
-            const data = Telegram.WebApp.initDataUnsafe;
-            const telegramId = data.user?.id || "";
-            const username = data.user?.username || "";
-            const chatId = data.chat?.id || "";
-            const firstName = data.user?.first_name || "";
-            const lastName = data.user?.last_name || "";
+          const data = Telegram.WebApp.initDataUnsafe;
+          const telegramId = data?.user?.id || "";
+          const username = data?.user?.username || "";
+          const chatId = data?.chat?.id || "";
+          const firstName = data?.user?.first_name || "";
+          const lastName = data?.user?.last_name || "";
+          const userData = `${telegramId};${username};${chatId};${firstName};${lastName}`;
 
-            const userData = `${telegramId};${username};${chatId};${firstName};${lastName}`;
-            console.log("▶️ Sending Telegram data to Unity:", userData);
+          console.log("📦 UserData klaar:", userData);
+
+          createUnityInstance(canvas, config, (progress) => {
+            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          }).then((unityInstance) => {
+            console.log("✅ Unity geladen");
             unityInstance.SendMessage("TelegramParams", "SetTelegramUserData", userData);
-          }
-        }).catch((message) => {
-          alert(message);
-        });
-      };
 
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            document.querySelector("#unity-fullscreen-button").onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }).catch((message) => {
+            alert(message);
+          });
+
+        } else {
+          alert("❌ Telegram WebApp niet beschikbaar");
+        }
+      };
       document.body.appendChild(script);
     </script>
   </body>
