@@ -75,36 +75,37 @@
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          console.log("✅ Unity WebGL geladen");
+        if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe) {
+          Telegram.WebApp.expand();
+          Telegram.WebApp.ready();
 
-          if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe) {
-            Telegram.WebApp.expand();
-            Telegram.WebApp.ready();
+          const data = Telegram.WebApp.initDataUnsafe;
+          const telegramId = data?.user?.id || "";
+          const username = data?.user?.username || "";
+          const chatId = data?.chat?.id || "";
+          const firstName = data?.user?.first_name || "";
+          const lastName = data?.user?.last_name || "";
+          const userData = `${telegramId};${username};${chatId};${firstName};${lastName}`;
 
-            const data = Telegram.WebApp.initDataUnsafe;
-            const telegramId = data?.user?.id || "";
-            const username = data?.user?.username || "";
-            const chatId = data?.chat?.id || "";
-            const firstName = data?.user?.first_name || "";
-            const lastName = data?.user?.last_name || "";
-            const userData = `${telegramId};${username};${chatId};${firstName};${lastName}`;
+          console.log("📦 UserData klaar:", userData);
 
-            console.log("📤 Stuur data naar Unity:", userData);
+          createUnityInstance(canvas, config, (progress) => {
+            document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+          }).then((unityInstance) => {
+            console.log("✅ Unity geladen");
             unityInstance.SendMessage("TelegramParams", "SetTelegramUserData", userData);
-          } else {
-            console.warn("⚠️ Telegram WebApp data niet beschikbaar!");
-          }
 
-          document.querySelector("#unity-loading-bar").style.display = "none";
-          document.querySelector("#unity-fullscreen-button").onclick = () => {
-            unityInstance.SetFullscreen(1);
-          };
-        }).catch((message) => {
-          alert(message);
-        });
+            document.querySelector("#unity-loading-bar").style.display = "none";
+            document.querySelector("#unity-fullscreen-button").onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }).catch((message) => {
+            alert(message);
+          });
+
+        } else {
+          alert("❌ Telegram WebApp niet beschikbaar");
+        }
       };
       document.body.appendChild(script);
     </script>
