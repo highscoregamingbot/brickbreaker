@@ -44,8 +44,10 @@
       background: #222;
     }
 
+    /* Hide play button until Unity is ready */
     #play-button-container {
       margin-top: 10px;
+      display: none;
     }
 
     #play-button {
@@ -56,6 +58,11 @@
       border: none;
       background-color: #007AFF;
       color: white;
+    }
+
+    #play-button:disabled {
+      background-color: #555;
+      cursor: not-allowed;
     }
 
     #unity-loading-bar,
@@ -71,21 +78,15 @@
   </div>
 
   <div id="play-button-container">
-    <button id="play-button">Play</button>
+    <button id="play-button" disabled>Play</button>
   </div>
 
   <script>
     var container = document.getElementById('unity-container');
-    var canvas = document.getElementById('unity-canvas');
+    var playButton = document.getElementById('play-button');
+    var playContainer = document.getElementById('play-button-container');
 
-    document.getElementById('play-button').addEventListener('click', function () {
-      // Fullscreen container
-      container.classList.add('fullscreen');
-      // Hide play button
-      document.getElementById('play-button-container').style.display = 'none';
-    });
-
-    // Unity loader script
+    // Unity loader config
     var buildUrl = 'Build';
     var loaderUrl = buildUrl + '/brickbreaker.loader.js';
     var config = {
@@ -101,20 +102,33 @@
       }
     };
 
+    // Load Unity loader script
     var script = document.createElement('script');
     script.src = loaderUrl;
     script.onload = function() {
       createUnityInstance(canvas, config).then(function(unityInstance) {
-        var initData = Telegram.WebApp.initDataUnsafe || {};
-        var unityData = [
-          initData.user?.id || '',
-          initData.user?.username || '',
-          initData.chat?.id || '',
-          initData.user?.first_name || '',
-          initData.user?.last_name || ''
-        ].join(';');
-        unityInstance.SendMessage('TelegramParams', 'SetTelegramUserData', unityData);
-      }).catch(function(e) { alert(e); });
+        // Unity is loaded, show and enable play button
+        playContainer.style.display = 'block';
+        playButton.disabled = false;
+
+        // On click, fullscreen and start game
+        playButton.addEventListener('click', function () {
+          container.classList.add('fullscreen');
+          playContainer.style.display = 'none';
+          // Optionally send Telegram data
+          var initData = Telegram.WebApp.initDataUnsafe || {};
+          var unityData = [
+            initData.user?.id || '',
+            initData.user?.username || '',
+            initData.chat?.id || '',
+            initData.user?.first_name || '',
+            initData.user?.last_name || ''
+          ].join(';');
+          unityInstance.SendMessage('TelegramParams', 'SetTelegramUserData', unityData);
+        });
+      }).catch(function(e) {
+        alert('Unity loading failed: ' + e);
+      });
     };
     document.body.appendChild(script);
   </script>
